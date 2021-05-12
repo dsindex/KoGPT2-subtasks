@@ -52,7 +52,12 @@ if __name__ == '__main__':
     else:
         assert False, 'no task matched!'
 
-    checkpoint_callback = ModelCheckpoint(save_top_k=1, monitor='val_loss', verbose=True)
+    checkpoint_callback = ModelCheckpoint(
+            filename='{epoch}-{val_acc:.4f}',
+            save_top_k=3,
+            monitor='val_loss',
+            mode='min',
+            verbose=True)
     trainer = Trainer.from_argparse_args(args, callbacks=[checkpoint_callback])
     if args.do_test:
         model = SubtaskGPT2.load_from_checkpoint(args.checkpoint_path)

@@ -7,7 +7,7 @@ from scipy.stats import pearsonr, spearmanr
 from transformers.models.gpt2 import GPT2ForSequenceClassification
 from transformers.optimization import AdamW, get_cosine_schedule_with_warmup
 import pytorch_lightning as pl
-
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 class Classification(pl.LightningModule):
     def __init__(self, hparams, **kwargs) -> None:
@@ -97,42 +97,57 @@ class SubtaskGPT2(Classification):
         input_ids = batch["text"]
         attention_mask = input_ids.ne(self.model.config.pad_token_id).float()
 
-        logits = self.model(input_ids=input_ids, attention_mask=attention_mask)
-
-        return logits
+        output = self.model(input_ids=input_ids, attention_mask=attention_mask)
+        
+        return output
 
     def training_step(self, batch, batch_idx):
-        label = batch["label"]
+        labels = batch["label"]
         output = self(batch)
-        y_hat = output['logits']
+        logits = output["logits"]
 
-        train_loss = self.loss_function(y_hat, label)
-        train_acc = self.metric_acc(torch.nn.functional.softmax(y_hat, dim=1),
-                                    label)
+        train_loss = self.loss_function(logits, labels)
+        train_acc = self.metric_acc(torch.nn.functional.softmax(logits, dim=1),
+                                    labels)
         self.log("train_loss", train_loss, on_epoch=True, prog_bar=True)
         self.log("train_acc", train_acc, on_step=True, prog_bar=True)
+
         return train_loss
 
     def validation_step(self, batch, batch_idx):
-        label = batch["label"]
+        labels = batch["label"]
         output = self(batch)
-        y_hat = output['logits']
-
-        val_loss = self.loss_function(y_hat, label)
-        val_acc = self.metric_acc(torch.nn.functional.softmax(y_hat, dim=1),
-                                  label)
+        logits = output["logits"]
+        
+        val_loss = self.loss_function(logits, labels)
+        val_acc = self.metric_acc(torch.nn.functional.softmax(logits, dim=1),
+                                  labels)
         self.log("loss", val_loss, on_epoch=True, prog_bar=True)
-        self.log('val_acc_step', val_acc, on_step=True, on_epoch=True)
+        self.log("val_acc_step", val_acc, on_step=True, on_epoch=True)
 
-        return {"loss": val_loss, "batch_cnt": label.shape[0]}
+        preds = logits.argmax(dim=-1)
+        y_true = list(labels.cpu().numpy())
+        y_pred = list(preds.cpu().numpy())
+
+        return {"loss": val_loss,
+                "batch_cnt": labels.shape[0],
+                "y_true": y_true,
+                "y_pred": y_pred}
 
     def validation_epoch_end(self, outputs):
         avg_loss = torch.stack([x["loss"] for x in outputs]).mean()
+        val_acc = self.metric_acc.compute()
         self.log('val_loss', avg_loss)
-        self.log('val_acc',
-                 self.metric_acc.compute(),
-                 on_epoch=True,
-                 prog_bar=True)
+        self.log('val_acc', val_acc, on_epoch=True, prog_bar=True)
+        self.metric_acc.reset()
+
+        y_true = []
+        y_pred = []
+        for i in outputs:
+            y_true += i["y_true"]
+            y_pred += i["y_pred"] 
+        val_acc_2 = accuracy_score(y_true, y_pred)
+        self.log('val_acc_2', val_acc_2, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         return self.validation_step(batch, batch_idx)
