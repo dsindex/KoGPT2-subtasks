@@ -137,6 +137,9 @@ class SubtaskGPT2(Classification):
     def test_step(self, batch, batch_idx):
         return self.validation_step(batch, batch_idx)
 
+    def test_epoch_end(self, outputs):
+        return self.validation_epoch_end(outputs)
+
 
 class SubtaskGPT2Regression(Classification):
     def __init__(self, hparams, **kwargs) -> None:
