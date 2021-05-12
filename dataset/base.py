@@ -11,15 +11,20 @@ class ArgsBase():
                             default=None,
                             help='train data path')
 
-        parser.add_argument('--output_dir',
-                            type=str,
-                            default=None,
-                            help='directory to collect tensorboard logs and params')
-
         parser.add_argument('--val_data_path',
                             type=str,
                             default=None,
                             help='valid data path')
+
+        parser.add_argument('--test_data_path',
+                            type=str,
+                            default=None,
+                            help='test data path')
+
+        parser.add_argument('--output_dir',
+                            type=str,
+                            default=None,
+                            help='directory to collect tensorboard logs and params')
 
         parser.add_argument('--seq_len',
                             type=int,

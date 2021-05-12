@@ -41,6 +41,7 @@ class NSMCDataset(Dataset):
 class NSMCDataModule(pl.LightningDataModule):
     def __init__(self,
                  train_file,
+                 val_file,
                  test_file,
                  max_seq_len=128,
                  batch_size=32, num_workers=3):
@@ -48,6 +49,7 @@ class NSMCDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.max_seq_len = max_seq_len
         self.train_file_path = train_file
+        self.val_file_path = val_file
         self.test_file_path = test_file
         self.num_workers = num_workers
 
@@ -63,10 +65,15 @@ class NSMCDataModule(pl.LightningDataModule):
 
     def setup(self, stage):
         # split dataset
-        self.nsmc_train = NSMCDataset(self.train_file_path,
-                                      self.max_seq_len)
-        self.nsmc_test = NSMCDataset(self.test_file_path,
-                                     self.max_seq_len)
+        if self.train_file_path:
+            self.nsmc_train = NSMCDataset(self.train_file_path,
+                                          self.max_seq_len)
+        if self.val_file_path:
+            self.nsmc_val = NSMCDataset(self.val_file_path,
+                                        self.max_seq_len)
+        if self.test_file_path:
+            self.nsmc_test = NSMCDataset(self.test_file_path,
+                                         self.max_seq_len)
 
     # return the dataloader for each split
     def train_dataloader(self):
@@ -77,7 +84,7 @@ class NSMCDataModule(pl.LightningDataModule):
         return nsmc_train
 
     def val_dataloader(self):
-        nsmc_val = DataLoader(self.nsmc_test,
+        nsmc_val = DataLoader(self.nsmc_val,
                               batch_size=self.batch_size,
                               num_workers=self.num_workers,
                               shuffle=False)

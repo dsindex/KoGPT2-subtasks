@@ -11,6 +11,8 @@ from model import SubtaskGPT2, SubtaskGPT2Regression, Classification
 parser = argparse.ArgumentParser(description='Train KoGPT2 subtask model')
 
 parser.add_argument('--task', type=str, default=None, help='subtask name')
+parser.add_argument('--do_test', action='store_true', help='evaluate on test set')
+parser.add_argument('--checkpoint_path', type=str, default=None)
 
 if __name__ == '__main__':
     parser = ArgsBase.add_model_specific_args(parser)
@@ -32,6 +34,7 @@ if __name__ == '__main__':
     if args.task.lower() == 'nsmc':
         dm = NSMCDataModule(args.train_data_path,
                             args.val_data_path,
+                            args.test_data_path,
                             batch_size=args.batch_size,
                             max_seq_len=args.seq_len,
                             num_workers=args.num_workers)
@@ -49,5 +52,8 @@ if __name__ == '__main__':
         assert False, 'no task matched!'
 
     trainer = Trainer.from_argparse_args(args)
-
-    trainer.fit(model, datamodule=dm)
+    if args.do_test:
+        model = SubtaskGPT2.load_from_checkpoint(args.checkpoint_path)
+        trainer.test(model, datamodule=dm)
+    else:
+        trainer.fit(model, datamodule=dm)
