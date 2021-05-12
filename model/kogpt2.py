@@ -8,6 +8,8 @@ from transformers.models.gpt2 import GPT2ForSequenceClassification
 from transformers.optimization import AdamW, get_cosine_schedule_with_warmup
 import pytorch_lightning as pl
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import classification_report, confusion_matrix
+
 
 class Classification(pl.LightningModule):
     def __init__(self, hparams, **kwargs) -> None:
@@ -148,6 +150,9 @@ class SubtaskGPT2(Classification):
             y_pred += i["y_pred"] 
         val_acc_2 = accuracy_score(y_true, y_pred)
         self.log('val_acc_2', val_acc_2, on_epoch=True, prog_bar=True)
+
+        print(classification_report(y_true, y_pred, digits=4))
+        print(confusion_matrix(y_true, y_pred))
 
     def test_step(self, batch, batch_idx):
         return self.validation_step(batch, batch_idx)
