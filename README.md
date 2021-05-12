@@ -1,3 +1,14 @@
+# Finetuning GPT2 for classification
+
+- how to
+```
+$ ./train-nmsc.sh
+
+$ ./test-nmsc.sh
+```
+
+
+----
 # KoGPT2-subtasks 
 
 ## KoGPT2 v2.0 한국어 평가 모듈
