@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import torch
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 from dataset import ArgsBase, NSMCDataModule, KorSTSDataModule
 from model import SubtaskGPT2, SubtaskGPT2Regression, Classification
@@ -51,7 +52,8 @@ if __name__ == '__main__':
     else:
         assert False, 'no task matched!'
 
-    trainer = Trainer.from_argparse_args(args)
+    checkpoint_callback = ModelCheckpoint(save_top_k=1, monitor='val_loss', verbose=True)
+    trainer = Trainer.from_argparse_args(args, callbacks=[checkpoint_callback])
     if args.do_test:
         model = SubtaskGPT2.load_from_checkpoint(args.checkpoint_path)
         trainer.test(model, datamodule=dm)
