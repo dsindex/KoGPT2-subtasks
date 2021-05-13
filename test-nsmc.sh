@@ -4,7 +4,7 @@ CUDA_VISIBLE_DEVICES=1 python train.py \
                 --do_test \
                 --gpus 1 \
                 --seq_len 64 \
-                --checkpoint_path lightning_logs/version_0/checkpoints/epoch=3-val_acc=0.9250.ckpt
+                --checkpoint_path lightning_logs/version_2/checkpoints/epoch=3-val_acc=0.9250.ckpt
 
 
 
